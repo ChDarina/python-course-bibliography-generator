@@ -5,6 +5,7 @@ from enum import Enum, unique
 
 import click
 
+from formatters.styles.apa import APACitationFormatter
 from formatters.styles.gost import GOSTCitationFormatter
 from logger import get_logger
 from readers.reader import SourcesReader
@@ -23,6 +24,23 @@ class CitationEnum(Enum):
     GOST = "gost"  # ГОСТ Р 7.0.5-2008
     MLA = "mla"  # Modern Language Association
     APA = "apa"  # American Psychological Association
+
+
+style_map = {
+    CitationEnum.APA.name: APACitationFormatter,
+    CitationEnum.GOST.name: GOSTCitationFormatter,
+}
+
+
+def apply_style(path_output: str, citation: str, models: list) -> None:
+    if citation in style_map.keys():
+        formatted_models = tuple(
+            str(item) for item in style_map[citation](models).format()
+        )
+        logger.info(f"Генерация выходного файла в формате {citation}...")
+        Renderer(formatted_models).render(path_output)
+    else:
+        logger.info(f"Тип цитирования {citation} не поддерживается")
 
 
 @click.command()
@@ -77,12 +95,7 @@ def process_input(
     )
 
     models = SourcesReader(path_input).read()
-    formatted_models = tuple(
-        str(item) for item in GOSTCitationFormatter(models).format()
-    )
-
-    logger.info("Генерация выходного файла ...")
-    Renderer(formatted_models).render(path_output)
+    apply_style(path_output, citation, models)
 
     logger.info("Команда успешно завершена.")
 
