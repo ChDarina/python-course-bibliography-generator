@@ -3,8 +3,20 @@
 """
 
 from formatters.base import BaseCitationFormatter
-from formatters.models import BookModel, InternetResourceModel, ArticlesCollectionModel
-from formatters.styles.gost import GOSTBook, GOSTInternetResource, GOSTCollectionArticle
+from formatters.models import (
+    BookModel,
+    InternetResourceModel,
+    ArticlesCollectionModel,
+    JournalArticleModel,
+    NewsPaperModel,
+)
+from formatters.styles.gost import (
+    GOSTBook,
+    GOSTInternetResource,
+    GOSTCollectionArticle,
+    GOSTJournal,
+    GOSTNewsPaper,
+)
 
 
 class TestGOST:
@@ -61,11 +73,43 @@ class TestGOST:
             == "Иванов И.М., Петров С.Н. Наука как искусство // Сборник научных трудов. – СПб.: АСТ, 2020. – С. 25-30."
         )
 
+    def test_journal(self, journal_model_fixture: JournalArticleModel) -> None:
+        """
+        Тестирование форматирования статьи из журнала.
+
+        :param AbstractModel journal_model_fixture: Фикстура модели статьи из журнала
+        :return:
+        """
+
+        model = GOSTJournal(journal_model_fixture)
+
+        assert (
+            model.formatted
+            == "Иванов И.М., Петров С.Н. Наука как искусство // Образование и Наука. 2020. №10. С. 25-30"
+        )
+
+    def test_newspaper(self, newspaper_model_fixture: NewsPaperModel) -> None:
+        """
+        Тестирование форматирования статьи их газеты
+
+        :param RegulationModel newspaper_model_fixture: Фикстура модели статьи из газеты
+        :return:
+        """
+
+        model = GOSTNewsPaper(newspaper_model_fixture)
+
+        assert (
+            model.formatted
+            == "Иванов И.М., Петров С.Н. Наука как искусство // Южный Урал. 1980. 01.10. Ст. 5."
+        )
+
     def test_citation_formatter(
         self,
         book_model_fixture: BookModel,
         internet_resource_model_fixture: InternetResourceModel,
         articles_collection_model_fixture: ArticlesCollectionModel,
+        journal_model_fixture: JournalArticleModel,
+        newspaper_model_fixture: NewsPaperModel,
     ) -> None:
         """
         Тестирование функции итогового форматирования списка источников.
@@ -73,6 +117,8 @@ class TestGOST:
         :param BookModel book_model_fixture: Фикстура модели книги
         :param InternetResourceModel internet_resource_model_fixture: Фикстура модели интернет-ресурса
         :param ArticlesCollectionModel articles_collection_model_fixture: Фикстура модели сборника статей
+        :param AbstractModel journal_model_fixture: Фикстура модели статьи из журнала
+        :param RegulationModel newspaper_model_fixture: Фикстура модели статьи из газеты
         :return:
         """
 
@@ -80,10 +126,14 @@ class TestGOST:
             GOSTBook(book_model_fixture),
             GOSTInternetResource(internet_resource_model_fixture),
             GOSTCollectionArticle(articles_collection_model_fixture),
+            GOSTJournal(journal_model_fixture),
+            GOSTNewsPaper(newspaper_model_fixture),
         ]
         result = BaseCitationFormatter(models).format()
 
         # тестирование сортировки списка источников
-        assert result[0] == models[2]
-        assert result[1] == models[0]
-        assert result[2] == models[1]
+        assert result[0] == models[3]
+        assert result[1] == models[2]
+        assert result[2] == models[4]
+        assert result[3] == models[0]
+        assert result[4] == models[1]
